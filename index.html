@@ -88,6 +88,8 @@
         <select id="filterLabel"><option value="">Все</option><option value="bug">Баг</option><option value="feature">Фича</option><option value="improvement">Улучшение</option><option value="urgent">Срочно</option></select>
         <label>Дедлайн:</label>
         <select id="filterDue"><option value="">Все</option><option value="overdue">Просроченные</option><option value="today">Сегодня</option><option value="week">На этой неделе</option><option value="none">Без дедлайна</option></select>
+        <label>Сотрудник:</label>
+        <select id="filterAssignee"><option value="">Все</option></select>
         <button class="filter-clear" id="filterClear">Сбросить</button>
     </div>
 
@@ -104,6 +106,14 @@
                 <div class="form-group"><label for="cardLabel">Метка</label><select id="cardLabel"><option value="">Без метки</option><option value="bug">Баг</option><option value="feature">Фича</option><option value="improvement">Улучшение</option><option value="urgent">Срочно</option></select></div>
                 <div class="form-group"><label for="cardProject">Проект</label><select id="cardProject"></select></div>
                 <div class="form-group"><label for="cardDueDate">Дедлайн</label><input type="date" id="cardDueDate"></div>
+                <div class="form-group">
+                    <label for="cardAssignee">Сотрудник</label>
+                    <select id="cardAssignee"><option value="">Не назначен</option></select>
+                    <div class="assignee-add-row" id="assigneeAddRow" style="display:none">
+                        <input type="text" id="cardAssigneeNew" placeholder="Имя сотрудника..." maxlength="50">
+                        <button type="button" class="btn-primary btn-sm" id="btnAddAssignee">+</button>
+                    </div>
+                </div>
                 <div class="modal-actions"><button type="button" class="btn-ghost" id="btnCancel">Отмена</button><button type="submit" class="btn-primary" id="btnSubmit">Создать</button></div>
             </form>
         </div>
@@ -144,7 +154,7 @@
     </div>
 
     <!-- Сортировка -->
-    <div class="modal-overlay" id="sortOverlay">
+    <div class="modal-overlay" id="sortOverlay" role="dialog" aria-modal="true">
         <div class="modal" style="width:280px;"><h2 class="modal-title">Сортировка</h2>
             <div class="sort-options">
                 <button class="sort-option" onclick="sortBy('priority')">📊 По приоритету</button>

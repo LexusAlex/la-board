@@ -9,24 +9,24 @@ const DEFAULT_COLUMNS = [
 
 const DEFAULT_CARDS = {
     backlog: [
-        { id: genId(), title: 'Исследовать конкурентов', desc: 'Анализ 5 основных конкурентов на рынке', priority: 'low', label: '', dueDate: '', createdAt: Date.now(), checklists: [] },
-        { id: genId(), title: 'Написать техническое задание', desc: 'Для модуля аналитики и дашборда', priority: 'high', label: 'feature', dueDate: '2026-07-20', createdAt: Date.now(), checklists: [{ text: 'Описать API', done: false }, { text: 'Согласовать с командой', done: false }] },
-        { id: genId(), title: 'Дизайн иконок для мобильной версии', desc: '', priority: 'medium', label: 'improvement', dueDate: '', createdAt: Date.now(), checklists: [] },
+        { id: genId(), title: 'Исследовать конкурентов', desc: 'Анализ 5 основных конкурентов на рынке', priority: 'low', label: '', dueDate: '', createdAt: Date.now(), checklists: [], assigneeId: '' },
+        { id: genId(), title: 'Написать техническое задание', desc: 'Для модуля аналитики и дашборда', priority: 'high', label: 'feature', dueDate: '2026-07-20', createdAt: Date.now(), checklists: [{ text: 'Описать API', done: false }, { text: 'Согласовать с командой', done: false }], assigneeId: '' },
+        { id: genId(), title: 'Дизайн иконок для мобильной версии', desc: '', priority: 'medium', label: 'improvement', dueDate: '', createdAt: Date.now(), checklists: [], assigneeId: '' },
     ],
     todo: [
-        { id: genId(), title: 'Настроить CI/CD пайплайн', desc: 'GitHub Actions для автоматического деплоя', priority: 'high', label: 'feature', dueDate: '2026-07-15', createdAt: Date.now(), checklists: [] },
-        { id: genId(), title: 'Рефакторинг модуля авторизации', desc: 'Вынести общую логику в отдельный сервис', priority: 'medium', label: 'improvement', dueDate: '', createdAt: Date.now(), checklists: [] },
+        { id: genId(), title: 'Настроить CI/CD пайплайн', desc: 'GitHub Actions для автоматического деплоя', priority: 'high', label: 'feature', dueDate: '2026-07-15', createdAt: Date.now(), checklists: [], assigneeId: '' },
+        { id: genId(), title: 'Рефакторинг модуля авторизации', desc: 'Вынести общую логику в отдельный сервис', priority: 'medium', label: 'improvement', dueDate: '', createdAt: Date.now(), checklists: [], assigneeId: '' },
     ],
     doing: [
-        { id: genId(), title: 'Интеграция платёжной системы', desc: 'Stripe API, обработка вебхуков', priority: 'high', label: 'feature', dueDate: '2026-07-14', createdAt: Date.now(), checklists: [{ text: 'Подключить SDK', done: true }, { text: 'Обработать вебхуки', done: false }] },
-        { id: genId(), title: 'Оптимизация SQL-запросов', desc: 'Ускорить загрузку дашборда в 3 раза', priority: 'medium', label: 'improvement', dueDate: '', createdAt: Date.now(), checklists: [] },
+        { id: genId(), title: 'Интеграция платёжной системы', desc: 'Stripe API, обработка вебхуков', priority: 'high', label: 'feature', dueDate: '2026-07-14', createdAt: Date.now(), checklists: [{ text: 'Подключить SDK', done: true }, { text: 'Обработать вебхуки', done: false }], assigneeId: '' },
+        { id: genId(), title: 'Оптимизация SQL-запросов', desc: 'Ускорить загрузку дашборда в 3 раза', priority: 'medium', label: 'improvement', dueDate: '', createdAt: Date.now(), checklists: [], assigneeId: '' },
     ],
     review: [
-        { id: genId(), title: 'Страница настроек профиля', desc: 'Аватар, имя, уведомления, тема', priority: 'low', label: 'feature', dueDate: '', createdAt: Date.now(), checklists: [] },
+        { id: genId(), title: 'Страница настроек профиля', desc: 'Аватар, имя, уведомления, тема', priority: 'low', label: 'feature', dueDate: '', createdAt: Date.now(), checklists: [], assigneeId: '' },
     ],
     done: [
-        { id: genId(), title: 'Регистрация и вход пользователя', desc: 'Email + OAuth через Google', priority: 'high', label: 'feature', dueDate: '', createdAt: Date.now(), checklists: [] },
-        { id: genId(), title: 'Базовый лейаут приложения', desc: 'Сайдбар, хедер, адаптив', priority: 'medium', label: 'improvement', dueDate: '', createdAt: Date.now(), checklists: [] },
+        { id: genId(), title: 'Регистрация и вход пользователя', desc: 'Email + OAuth через Google', priority: 'high', label: 'feature', dueDate: '', createdAt: Date.now(), checklists: [], assigneeId: '' },
+        { id: genId(), title: 'Базовый лейаут приложения', desc: 'Сайдбар, хедер, адаптив', priority: 'medium', label: 'improvement', dueDate: '', createdAt: Date.now(), checklists: [], assigneeId: '' },
     ],
 };
 
@@ -45,7 +45,7 @@ let previewColumnId = null;
 let wipColumnId = null;
 
 // Фильтры
-let filters = { project: '', priority: '', label: '', due: '' };
+let filters = { project: '', priority: '', label: '', due: '', assignee: '' };
 
 // Undo/Redo
 let undoStack = [];
@@ -94,7 +94,7 @@ function getCardNumber(columnId, cardIndex) {
 function escHtml(str) {
     const d = document.createElement('div');
     d.textContent = str;
-    return d.innerHTML;
+    return d.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 function formatDate(dateStr) {
@@ -124,6 +124,59 @@ function getProjectNameById(projectId) {
     return project ? project.name : 'Неизвестный';
 }
 
+// ===== СОТРУДНИКИ =====
+function loadAssignees() {
+    const project = getCurrentProject();
+    if (!project) return [];
+    try {
+        const data = localStorage.getItem('taskBoardAssignees_' + project.id);
+        if (!data) return [];
+        const parsed = JSON.parse(data);
+        if (!Array.isArray(parsed)) return [];
+        return parsed;
+    } catch { return []; }
+}
+
+function saveAssignees(list) {
+    const project = getCurrentProject();
+    if (!project) return;
+    try {
+        localStorage.setItem('taskBoardAssignees_' + project.id, JSON.stringify(list));
+    } catch (e) {
+        showToast('⚠️ Ошибка сохранения сотрудников');
+    }
+}
+
+function getAssigneeNameById(assigneeId) {
+    if (!assigneeId) return '';
+    const assignees = loadAssignees();
+    const a = assignees.find(a => a.id === assigneeId);
+    return a ? a.name : '';
+}
+
+function genAssigneeId() {
+    return 'asm_' + Math.random().toString(36).substr(2, 7);
+}
+
+function populateAssigneeSelect(selectEl, selectedId) {
+    const assignees = loadAssignees();
+    selectEl.innerHTML = '<option value="">Не назначен</option>' +
+        assignees.map(a => `<option value="${a.id}"${a.id === selectedId ? ' selected' : ''}>${escHtml(a.name)}</option>`).join('') +
+        '<option value="__new__">+ Новый сотрудник...</option>';
+}
+
+function populateAssigneeFilter() {
+    const select = document.getElementById('filterAssignee');
+    const assignees = loadAssignees();
+    const currentVal = select.value;
+    select.innerHTML = '<option value="">Все</option>' +
+        assignees.map(a => `<option value="${a.id}"${a.id === currentVal ? ' selected' : ''}>${escHtml(a.name)}</option>`).join('');
+    if (currentVal && !assignees.some(a => a.id === currentVal)) {
+        select.value = '';
+        filters.assignee = '';
+    }
+}
+
 // ===== ПРОЕКТЫ =====
 function loadProjects() {
     try {
@@ -141,11 +194,13 @@ function saveProjects(projects) {
 }
 
 function loadCurrentProjectId() {
-    return localStorage.getItem('taskBoardCurrentProject') || null;
+    try { return localStorage.getItem('taskBoardCurrentProject') || null; }
+    catch { return null; }
 }
 
 function saveCurrentProjectId(id) {
-    localStorage.setItem('taskBoardCurrentProject', id);
+    try { localStorage.setItem('taskBoardCurrentProject', id); }
+    catch { showToast('⚠️ Ошибка сохранения текущего проекта'); }
 }
 
 function migrateOldData() {
@@ -231,6 +286,15 @@ function switchProject(projectId) {
     undoStack = [];
     redoStack = [];
     selectedCards.clear();
+    focusedCardId = null;
+    focusedColumnId = null;
+    filters = { project: '', priority: '', label: '', due: '', assignee: '' };
+    document.getElementById('filterProject').value = '';
+    document.getElementById('filterPriority').value = '';
+    document.getElementById('filterLabel').value = '';
+    document.getElementById('filterDue').value = '';
+    document.getElementById('filterAssignee').value = '';
+    document.getElementById('searchInput').value = '';
     renderBoard();
     renderProjectSelector();
     updateUndoRedoButtons();
@@ -332,12 +396,13 @@ function updateUndoRedoButtons() {
 
 // ===== ТЕМА =====
 function loadTheme() {
-    return localStorage.getItem('taskBoardTheme') || 'light';
+    try { return localStorage.getItem('taskBoardTheme') || 'light'; }
+    catch { return 'light'; }
 }
 
 function setTheme(theme) {
     document.body.setAttribute('data-theme', theme);
-    localStorage.setItem('taskBoardTheme', theme);
+    try { localStorage.setItem('taskBoardTheme', theme); } catch {}
     const sun = document.getElementById('iconSun');
     const moon = document.getElementById('iconMoon');
     if (sun && moon) {
@@ -353,12 +418,13 @@ function toggleTheme() {
 
 // ===== КОМПАКТНЫЙ РЕЖИМ =====
 function loadCompact() {
-    return localStorage.getItem('taskBoardCompact') === 'true';
+    try { return localStorage.getItem('taskBoardCompact') === 'true'; }
+    catch { return false; }
 }
 
 function toggleCompact() {
     const compact = !loadCompact();
-    localStorage.setItem('taskBoardCompact', compact);
+    try { localStorage.setItem('taskBoardCompact', compact); } catch {}
     document.body.classList.toggle('compact', compact);
     document.getElementById('btnCompact').classList.toggle('active', compact);
 }
@@ -368,6 +434,7 @@ function applyFilters(card) {
     if (filters.project && (card.projectId || getCurrentProject().id) !== filters.project) return false;
     if (filters.priority && card.priority !== filters.priority) return false;
     if (filters.label && card.label !== filters.label) return false;
+    if (filters.assignee && (card.assigneeId || '') !== filters.assignee) return false;
     if (filters.due) {
         if (filters.due === 'none') {
             if (card.dueDate) return false;
@@ -390,7 +457,13 @@ function applyFilters(card) {
 function matchesSearch(card) {
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
-    return card.title.toLowerCase().includes(q) || (card.desc && card.desc.toLowerCase().includes(q));
+    if (card.title.toLowerCase().includes(q)) return true;
+    if (card.desc && card.desc.toLowerCase().includes(q)) return true;
+    if (card.assigneeId) {
+        const name = getAssigneeNameById(card.assigneeId).toLowerCase();
+        if (name.includes(q)) return true;
+    }
+    return false;
 }
 
 function getFilteredCards(columnId) {
@@ -401,8 +474,9 @@ function getFilteredCards(columnId) {
 // ===== ПРОГРЕСС =====
 function calcProgress() {
     const weights = {};
+    const len = columnsConfig.length;
     columnsConfig.forEach((col, i) => {
-        weights[col.id] = i / (columnsConfig.length - 1) * 100;
+        weights[col.id] = len > 1 ? i / (len - 1) * 100 : 0;
     });
     let total = 0, weighted = 0;
     columnsConfig.forEach(col => {
@@ -416,6 +490,7 @@ function calcProgress() {
 function renderBoard() {
     const board = document.getElementById('board');
     board.innerHTML = '';
+    document.querySelectorAll('.context-menu').forEach(m => m.remove());
 
     columnsConfig.forEach(col => {
         const allCards = boardData[col.id] || [];
@@ -438,19 +513,19 @@ function renderBoard() {
                     <span class="count-badge">${filtered.length}</span>
                 </div>
                 <div class="column-actions">
-                    <button class="column-btn" onclick="toggleCollapse('${col.id}')" title="${isCollapsed ? 'Развернуть' : 'Свернуть'}" aria-label="${isCollapsed ? 'Развернуть' : 'Свернуть'} колонку">
+                    <button class="column-btn" draggable="false" onclick="toggleCollapse('${col.id}')" title="${isCollapsed ? 'Развернуть' : 'Свернуть'}" aria-label="${isCollapsed ? 'Развернуть' : 'Свернуть'} колонку">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             ${isCollapsed ? '<polyline points="9,18 15,12 9,6"/>' : '<polyline points="15,18 9,12 15,6"/>'}
                         </svg>
                     </button>
-                    <button class="column-btn" onclick="openWipModal('${col.id}')" title="Лимит карточек" aria-label="Настроить лимит карточек">
+                    <button class="column-btn" draggable="false" onclick="openWipModal('${col.id}')" title="Лимит карточек" aria-label="Настроить лимит карточек">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
                         </svg>
                     </button>
-                    <button class="column-btn" onclick="deleteColumn('${col.id}')" title="Удалить колонку" aria-label="Удалить колонку">
+                    <button class="column-btn" draggable="false" onclick="deleteColumn('${col.id}')" title="Удалить колонку" aria-label="Удалить колонку">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="3,6 5,6 21,6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                            <polyline points="3,6 5,6 21,6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
                         </svg>
                     </button>
                 </div>
@@ -503,12 +578,21 @@ function renderBoard() {
         card.addEventListener('touchend', handleTouchEnd);
     });
 
-    // События на заголовки колонок для перетаскивания
-    document.querySelectorAll('.column:not(.collapsed) .column-header').forEach(header => {
+    // События на колонки для перетаскивания
+    document.querySelectorAll('.column:not(.collapsed)').forEach(col => {
+        const header = col.querySelector('.column-header');
+        header.addEventListener('mousedown', handleColumnMouseDown);
+        header.addEventListener('mouseup', () => header.removeAttribute('draggable'));
+        header.addEventListener('mouseleave', () => header.removeAttribute('draggable'));
         header.addEventListener('dragstart', handleColumnDragStart);
         header.addEventListener('dragend', handleColumnDragEnd);
-        header.addEventListener('dragover', handleColumnDragOver);
-        header.addEventListener('drop', handleColumnDrop);
+        col.addEventListener('dragover', handleColumnDragOver);
+        col.addEventListener('dragenter', handleColumnDragEnter);
+        col.addEventListener('dragleave', handleColumnDragLeave);
+        col.addEventListener('drop', handleColumnDrop);
+        header.addEventListener('touchstart', handleColumnTouchStart, { passive: false });
+        header.addEventListener('touchmove', handleColumnTouchMove, { passive: false });
+        header.addEventListener('touchend', handleColumnTouchEnd);
     });
 
     updateTotalCount();
@@ -610,7 +694,9 @@ function handleDragEnd(e) {
 }
 
 function handleDragOver(e) {
+    if (!draggedCardId) return;
     e.preventDefault();
+    e.stopPropagation();
     e.dataTransfer.dropEffect = 'move';
     const body = e.currentTarget;
     body.querySelectorAll('.drop-indicator').forEach(el => el.remove());
@@ -622,7 +708,9 @@ function handleDragOver(e) {
 }
 
 function handleDragEnter(e) {
+    if (!draggedCardId) return;
     e.preventDefault();
+    e.stopPropagation();
     const column = e.currentTarget.closest('.column');
     if (column) column.classList.add('drag-over');
 }
@@ -637,10 +725,11 @@ function handleDragLeave(e) {
 }
 
 function handleDrop(e) {
+    if (!draggedCardId || !dragSourceColumnId) return;
     e.preventDefault();
+    e.stopPropagation();
     const body = e.currentTarget;
     const targetColumnId = body.dataset.columnId;
-    if (!draggedCardId || !dragSourceColumnId) return;
 
     body.querySelectorAll('.drop-indicator').forEach(el => el.remove());
     document.querySelectorAll('.column.drag-over').forEach(el => el.classList.remove('drag-over'));
@@ -688,12 +777,44 @@ function getDragAfterElement(container, y) {
 }
 
 // ===== DRAG & DROP КОЛОНОК =====
+function handleColumnMouseDown(e) {
+    const header = e.target.closest('.column-header');
+    if (!header) return;
+    if (e.target.closest('.column-btn') || e.target.closest('.column-title[contenteditable="true"]')) {
+        header.removeAttribute('draggable');
+        return;
+    }
+    header.setAttribute('draggable', 'true');
+}
+
+function getDragAfterColumnElement(board, x) {
+    const columns = [...board.querySelectorAll('.column:not(.column-dragging):not(.column-drop-indicator)')];
+    return columns.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = x - box.left - box.width / 2;
+        if (offset < 0 && offset > closest.offset) return { offset, element: child };
+        return closest;
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
+
 function handleColumnDragStart(e) {
     const column = e.target.closest('.column');
     if (!column) return;
+    if (e.target.closest('.column-title[contenteditable="true"]')) {
+        e.preventDefault();
+        return;
+    }
     draggedColumnId = column.dataset.columnId;
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', draggedColumnId);
+
+    const header = column.querySelector('.column-header');
+    const ghost = header.cloneNode(true);
+    ghost.style.cssText = 'position:absolute;top:-9999px;max-width:300px;padding:12px 16px;background:var(--bg-raised);border:1px solid var(--accent);border-radius:8px;box-shadow:var(--shadow-md);';
+    document.body.appendChild(ghost);
+    e.dataTransfer.setDragImage(ghost, e.offsetX, e.offsetY);
+    requestAnimationFrame(() => ghost.remove());
+
     requestAnimationFrame(() => column.classList.add('column-dragging'));
 }
 
@@ -701,10 +822,26 @@ function handleColumnDragEnd(e) {
     const column = e.target.closest('.column');
     if (column) column.classList.remove('column-dragging');
     document.querySelectorAll('.column.column-drag-over').forEach(el => el.classList.remove('column-drag-over'));
+    document.querySelectorAll('.column-drop-indicator').forEach(el => el.remove());
     draggedColumnId = null;
 }
 
 function handleColumnDragOver(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!draggedColumnId) return;
+
+    const board = document.getElementById('board');
+    board.querySelectorAll('.column-drop-indicator').forEach(el => el.remove());
+
+    const afterCol = getDragAfterColumnElement(board, e.clientX);
+    const indicator = document.createElement('div');
+    indicator.className = 'column-drop-indicator';
+    if (afterCol) board.insertBefore(indicator, afterCol);
+    else board.appendChild(indicator);
+}
+
+function handleColumnDragEnter(e) {
     e.preventDefault();
     if (!draggedColumnId) return;
     const column = e.target.closest('.column');
@@ -713,28 +850,44 @@ function handleColumnDragOver(e) {
     }
 }
 
+function handleColumnDragLeave(e) {
+    const column = e.target.closest('.column');
+    if (column && !column.contains(e.relatedTarget)) {
+        column.classList.remove('column-drag-over');
+    }
+}
+
 function handleColumnDrop(e) {
     e.preventDefault();
-    const targetColumn = e.target.closest('.column');
-    if (!targetColumn || !draggedColumnId) return;
+    e.stopPropagation();
+    if (!draggedColumnId) return;
 
-    const targetId = targetColumn.dataset.columnId;
-    if (targetId === draggedColumnId) return;
-
+    const board = document.getElementById('board');
+    board.querySelectorAll('.column-drop-indicator').forEach(el => el.remove());
     document.querySelectorAll('.column.column-drag-over').forEach(el => el.classList.remove('column-drag-over'));
+
+    const afterCol = getDragAfterColumnElement(board, e.clientX);
+    const fromIndex = columnsConfig.findIndex(c => c.id === draggedColumnId);
+    let toIndex;
+
+    if (afterCol) {
+        toIndex = columnsConfig.findIndex(c => c.id === afterCol.dataset.columnId);
+    } else {
+        toIndex = columnsConfig.length;
+    }
+
+    if (fromIndex === -1 || toIndex === -1) return;
+    if (fromIndex === toIndex || fromIndex === toIndex - 1) return;
 
     pushUndo();
 
-    const fromIndex = columnsConfig.findIndex(c => c.id === draggedColumnId);
-    const toIndex = columnsConfig.findIndex(c => c.id === targetId);
-    if (fromIndex === -1 || toIndex === -1) return;
-
     const [moved] = columnsConfig.splice(fromIndex, 1);
-    columnsConfig.splice(toIndex, 0, moved);
+    const adjustedIndex = fromIndex < toIndex ? toIndex - 1 : toIndex;
+    columnsConfig.splice(adjustedIndex, 0, moved);
 
     saveColumnsConfig();
     renderBoard();
-    showToast('↕ Колонка перемещена');
+    showToast('↕ Колонка перемещена', true);
 }
 
 // ===== DRAG & DROP (TOUCH) =====
@@ -750,6 +903,7 @@ function handleTouchStart(e) {
     draggedCardId = card.dataset.cardId;
     dragSourceColumnId = card.dataset.columnId;
     touchCard.longPressTimer = setTimeout(() => {
+        if (!document.body.contains(card)) { touchCard = null; draggedCardId = null; dragSourceColumnId = null; return; }
         touchCard.classList.add('dragging');
         touchClone = card.cloneNode(true);
         touchClone.style.cssText = 'position:fixed;z-index:1000;width:' + card.offsetWidth + 'px;opacity:0.8;pointer-events:none;transform:rotate(3deg) scale(1.05);';
@@ -837,43 +991,129 @@ function moveTouchClone(touch) {
     touchClone.style.top = (touch.clientY - 20) + 'px';
 }
 
+// ===== TOUCH DRAG & DROP КОЛОНОК =====
+let touchColumnStartX, touchColumnStartY, touchColumn, touchColumnClone, touchColumnLongPress;
+
+function handleColumnTouchStart(e) {
+    const header = e.target.closest('.column-header');
+    if (!header) return;
+    if (e.target.closest('.column-btn') || e.target.closest('.column-title[contenteditable="true"]')) return;
+    const column = header.closest('.column');
+    if (!column || column.classList.contains('collapsed')) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    touchColumnStartX = touch.clientX;
+    touchColumnStartY = touch.clientY;
+    touchColumn = column;
+    touchColumnLongPress = setTimeout(() => {
+        if (!document.body.contains(column)) { touchColumn = null; draggedColumnId = null; return; }
+        draggedColumnId = column.dataset.columnId;
+        column.classList.add('column-dragging');
+        if (navigator.vibrate) navigator.vibrate(10);
+        touchColumnClone = column.querySelector('.column-header').cloneNode(true);
+        touchColumnClone.style.cssText = 'position:fixed;z-index:1000;pointer-events:none;max-width:300px;padding:12px 16px;background:var(--bg-raised);border:1px solid var(--accent);border-radius:8px;box-shadow:var(--shadow-md);opacity:0.85;transform:rotate(2deg) scale(1.05);';
+        document.body.appendChild(touchColumnClone);
+        moveTouchColumnClone(touch);
+    }, 300);
+}
+
+function handleColumnTouchMove(e) {
+    if (!touchColumn) return;
+    const touch = e.touches[0];
+    if (Math.abs(touch.clientX - touchColumnStartX) > 10 || Math.abs(touch.clientY - touchColumnStartY) > 10) {
+        clearTimeout(touchColumnLongPress);
+    }
+    if (!touchColumnClone) return;
+    e.preventDefault();
+    moveTouchColumnClone(touch);
+
+    const board = document.getElementById('board');
+    board.querySelectorAll('.column-drop-indicator:not([style*="position:fixed"])').forEach(el => el.remove());
+
+    const afterCol = getDragAfterColumnElement(board, touch.clientX);
+    const indicator = document.createElement('div');
+    indicator.className = 'column-drop-indicator';
+    if (afterCol) board.insertBefore(indicator, afterCol);
+    else board.appendChild(indicator);
+}
+
+function handleColumnTouchEnd(e) {
+    if (!touchColumn) return;
+    clearTimeout(touchColumnLongPress);
+
+    if (touchColumnClone && draggedColumnId) {
+        const touch = e.changedTouches[0];
+        const board = document.getElementById('board');
+        const afterCol = getDragAfterColumnElement(board, touch.clientX);
+        const fromIndex = columnsConfig.findIndex(c => c.id === draggedColumnId);
+        let toIndex;
+
+        if (afterCol) {
+            toIndex = columnsConfig.findIndex(c => c.id === afterCol.dataset.columnId);
+        } else {
+            toIndex = columnsConfig.length;
+        }
+
+        if (fromIndex !== -1 && toIndex !== -1 && fromIndex !== toIndex && fromIndex !== toIndex - 1) {
+            pushUndo();
+            const [moved] = columnsConfig.splice(fromIndex, 1);
+            const adjustedIndex = fromIndex < toIndex ? toIndex - 1 : toIndex;
+            columnsConfig.splice(adjustedIndex, 0, moved);
+            saveColumnsConfig();
+            if (navigator.vibrate) navigator.vibrate(10);
+            showToast('↕ Колонка перемещена', true);
+        }
+
+        touchColumnClone.remove();
+        touchColumnClone = null;
+    }
+
+    if (touchColumn) touchColumn.classList.remove('column-dragging');
+    document.querySelectorAll('.column-drop-indicator').forEach(el => el.remove());
+    document.querySelectorAll('.column.column-drag-over').forEach(el => el.classList.remove('column-drag-over'));
+    touchColumn = null;
+    draggedColumnId = null;
+    renderBoard();
+}
+
+function moveTouchColumnClone(touch) {
+    if (!touchColumnClone) return;
+    touchColumnClone.style.left = (touch.clientX - touchColumnClone.offsetWidth / 2) + 'px';
+    touchColumnClone.style.top = (touch.clientY - 20) + 'px';
+}
+
 // ===== INLINE-РЕДАКТИРОВАНИЕ =====
-function handleColumnTitleBlur(e) {
-    const el = e.target;
-    const colId = el.dataset.columnId;
-    const newTitle = el.textContent.trim();
-    el.removeAttribute('contenteditable');
-
-    if (!newTitle) {
-        el.textContent = columnsConfig.find(c => c.id === colId).title;
-        return;
-    }
-
-    pushUndo();
-    const col = columnsConfig.find(c => c.id === colId);
-    if (col && col.title !== newTitle) {
-        col.title = newTitle;
-        saveColumnsConfig();
-        showToast(`✏️ Колонка переименована`);
-    }
-}
-
-function handleColumnTitleKey(e) {
-    if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); }
-    if (e.key === 'Escape') { e.target.textContent = columnsConfig.find(c => c.id === e.target.dataset.columnId).title; e.target.blur(); }
-}
-
 function startColumnEdit(colId) {
     const el = document.querySelector(`.column-title[data-column-id="${colId}"]`);
-    if (el) {
-        el.setAttribute('contenteditable', 'true');
-        el.focus();
-        const range = document.createRange();
-        range.selectNodeContents(el);
-        const sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(range);
-    }
+    if (!el) return;
+    const col = columnsConfig.find(c => c.id === colId);
+    if (!col) return;
+    el.setAttribute('contenteditable', 'true');
+    el.focus();
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+
+    const finishEdit = () => {
+        el.removeAttribute('contenteditable');
+        const newTitle = el.textContent.trim();
+        if (newTitle && newTitle !== col.title) {
+            pushUndo();
+            col.title = newTitle;
+            saveColumnsConfig();
+            showToast('✏️ Колонка переименована');
+        } else {
+            el.textContent = col.title;
+        }
+        renderBoard();
+    };
+    el.addEventListener('blur', finishEdit, { once: true });
+    el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); el.blur(); }
+        if (e.key === 'Escape') { el.textContent = col.title; el.blur(); }
+    });
 }
 
 // ===== МОДАЛЬНЫЕ ОКНА =====
@@ -897,6 +1137,7 @@ function openModal(columnId, cardId = null) {
         document.getElementById('cardLabel').value = card.label || '';
         document.getElementById('cardDueDate').value = card.dueDate || '';
         document.getElementById('cardProject').value = card.projectId || getCurrentProject().id;
+        populateAssigneeSelect(document.getElementById('cardAssignee'), card.assigneeId || '');
     } else {
         title.textContent = 'Новая карточка';
         submitBtn.textContent = 'Создать';
@@ -906,7 +1147,9 @@ function openModal(columnId, cardId = null) {
         document.getElementById('cardLabel').value = '';
         document.getElementById('cardDueDate').value = '';
         document.getElementById('cardProject').value = getCurrentProject().id;
+        populateAssigneeSelect(document.getElementById('cardAssignee'), '');
     }
+    document.getElementById('assigneeAddRow').style.display = 'none';
 
     overlay.classList.add('active');
     setTimeout(() => document.getElementById('cardTitle').focus(), 100);
@@ -914,6 +1157,8 @@ function openModal(columnId, cardId = null) {
 
 function closeModal() {
     document.getElementById('modalOverlay').classList.remove('active');
+    document.getElementById('assigneeAddRow').style.display = 'none';
+    document.getElementById('cardAssigneeNew').value = '';
     currentColumnId = null;
     editingCardId = null;
     editingColumnId = null;
@@ -927,6 +1172,12 @@ function submitCard(e) {
     const label = document.getElementById('cardLabel').value;
     const dueDate = document.getElementById('cardDueDate').value;
     const projectId = document.getElementById('cardProject').value;
+    const assigneeSelect = document.getElementById('cardAssignee');
+    if (assigneeSelect.value === '__new__') {
+        showToast('⚠️ Сначала добавьте сотрудника или выберите существующего');
+        return;
+    }
+    const assigneeId = assigneeSelect.value;
 
     if (!title) {
         document.getElementById('cardTitle').style.borderColor = 'var(--danger)';
@@ -938,7 +1189,8 @@ function submitCard(e) {
     pushUndo();
 
     if (editingCardId) {
-        const card = boardData[editingColumnId].find(c => c.id === editingCardId);
+        const col = boardData[editingColumnId] || [];
+        const card = col.find(c => c.id === editingCardId);
         if (card) {
             card.title = title;
             card.desc = desc;
@@ -946,14 +1198,15 @@ function submitCard(e) {
             card.label = label;
             card.dueDate = dueDate;
             card.projectId = projectId;
+            card.assigneeId = assigneeId;
             showToast(`✏️ «${title.slice(0, 30)}» обновлена`);
         }
     } else {
         if (!boardData[currentColumnId]) boardData[currentColumnId] = [];
-        const newCard = { id: genId(), title, desc, priority, label, dueDate, projectId, createdAt: Date.now(), checklists: [] };
+        const newCard = { id: genId(), title, desc, priority, label, dueDate, projectId, assigneeId, createdAt: Date.now(), checklists: [] };
         boardData[currentColumnId].push(newCard);
         const col = columnsConfig.find(c => c.id === currentColumnId);
-        showToast(`➕ Карточка добавлена в «${col.title}»`);
+        showToast(`➕ Карточка добавлена в «${col ? col.title : 'колонку'}»`);
     }
 
     saveBoardData();
@@ -1040,6 +1293,9 @@ function openPreview(columnId, cardId) {
         ${card.projectId ? `<div class="preview-meta-item" style="font-size:12px;color:var(--muted);">
             Проект: ${getProjectNameById(card.projectId)}
         </div>` : ''}
+        ${card.assigneeId ? `<div class="preview-meta-item" style="font-size:12px;color:var(--muted);">
+            Сотрудник: ${getAssigneeNameById(card.assigneeId)}
+        </div>` : ''}
         ${checklistHtml}
     `;
 
@@ -1101,6 +1357,7 @@ function addChecklistItem() {
     const card = boardData[columnId].find(c => c.id === cardId);
     if (!card) return;
 
+    pushUndo();
     if (!card.checklists) card.checklists = [];
     card.checklists.push({ text, done: false });
 
@@ -1108,15 +1365,14 @@ function addChecklistItem() {
     openChecklistModal(columnId, cardId);
 }
 
-let removeChecklistEditItemIndex = -1;
 function removeChecklistEditItem(index) {
-    removeChecklistEditItemIndex = index;
     const overlay = document.getElementById('checklistOverlay');
     const columnId = overlay.dataset.columnId;
     const cardId = overlay.dataset.cardId;
     const card = boardData[columnId].find(c => c.id === cardId);
     if (!card || !card.checklists) return;
 
+    pushUndo();
     card.checklists.splice(index, 1);
     openChecklistModal(columnId, cardId);
 }
@@ -1360,6 +1616,7 @@ function resetBoard() {
             c.createdAt = Date.now();
             c.checklists = c.checklists || [];
             c.projectId = currentProj ? currentProj.id : '';
+            c.assigneeId = '';
         });
     }
     selectedCards.clear();
@@ -1375,12 +1632,16 @@ function sortBy(field) {
     const order = { high: 0, medium: 1, low: 2 };
     for (const colId in boardData) {
         boardData[colId].sort((a, b) => {
-            if (field === 'priority') return order[a.priority] - order[b.priority];
+            if (field === 'priority') {
+                const d = order[a.priority] - order[b.priority];
+                return d !== 0 ? d : a.title.localeCompare(b.title, 'ru');
+            }
             if (field === 'date') {
-                if (!a.dueDate && !b.dueDate) return 0;
+                if (!a.dueDate && !b.dueDate) return a.title.localeCompare(b.title, 'ru');
                 if (!a.dueDate) return 1;
                 if (!b.dueDate) return -1;
-                return new Date(a.dueDate) - new Date(b.dueDate);
+                const d = a.dueDate.localeCompare(b.dueDate);
+                return d !== 0 ? d : a.title.localeCompare(b.title, 'ru');
             }
             if (field === 'name') return a.title.localeCompare(b.title, 'ru');
             return 0;
@@ -1388,6 +1649,7 @@ function sortBy(field) {
     }
     saveBoardData();
     renderBoard();
+    document.getElementById('sortOverlay').classList.remove('active');
     showToast(`📊 Сортировка: ${field === 'priority' ? 'по приоритету' : field === 'date' ? 'по дате' : 'по имени'}`);
 }
 
@@ -1395,17 +1657,20 @@ function sortBy(field) {
 function exportData() {
     const projects = loadProjects() || [];
     const boards = {};
+    const assignees = {};
     for (const p of projects) {
         try {
             const bd = localStorage.getItem('taskBoardData_' + p.id);
             const cc = localStorage.getItem('taskBoardColumns_' + p.id);
+            const asm = localStorage.getItem('taskBoardAssignees_' + p.id);
             boards[p.id] = {
                 boardData: bd ? JSON.parse(bd) : {},
                 columnsConfig: cc ? JSON.parse(cc) : []
             };
+            assignees[p.id] = asm ? JSON.parse(asm) : [];
         } catch {}
     }
-    const data = { projects, boards };
+    const data = { projects, boards, assignees };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -1427,10 +1692,11 @@ function importData(file) {
                 return;
             }
 
-            // Новый формат: { projects, boards }
+            // Новый формат: { projects, boards, assignees }
             if (data.projects && data.boards) {
                 const importedProjects = data.projects;
                 const boards = data.boards;
+                const importedAssignees = data.assignees || {};
                 if (!Array.isArray(importedProjects)) {
                     showToast('⚠️ Неверная структура: projects должен быть массивом');
                     return;
@@ -1446,7 +1712,6 @@ function importData(file) {
 
                     const board = boards[proj.id];
                     if (board && board.boardData && board.columnsConfig) {
-                        // Миграция карточек
                         for (const colId in board.boardData) {
                             if (!Array.isArray(board.boardData[colId])) continue;
                             board.boardData[colId].forEach(c => {
@@ -1454,10 +1719,15 @@ function importData(file) {
                                 if (!c.id) c.id = genId();
                                 if (!c.title) c.title = 'Без названия';
                                 if (!c.projectId) c.projectId = proj.id;
+                                if (!c.assigneeId) c.assigneeId = '';
                             });
                         }
                         localStorage.setItem('taskBoardData_' + proj.id, JSON.stringify(board.boardData));
                         localStorage.setItem('taskBoardColumns_' + proj.id, JSON.stringify(board.columnsConfig));
+                    }
+
+                    if (importedAssignees[proj.id] && Array.isArray(importedAssignees[proj.id])) {
+                        try { localStorage.setItem('taskBoardAssignees_' + proj.id, JSON.stringify(importedAssignees[proj.id])); } catch {}
                     }
                 }
 
@@ -1514,6 +1784,7 @@ function importData(file) {
                     if (!c.id) c.id = genId();
                     if (!c.title) c.title = 'Без названия';
                     if (!c.projectId) c.projectId = getCurrentProject().id;
+                    if (!c.assigneeId) c.assigneeId = '';
                 });
             }
 
@@ -1586,7 +1857,7 @@ function moveCardUpDown(colId, cardId, direction) {
     if (targetIndex < 0 || targetIndex >= columnsConfig.length) return;
 
     const targetColId = columnsConfig[targetIndex].id;
-    const srcCards = boardData[colId];
+    const srcCards = boardData[colId] || [];
     const cardIndex = srcCards.findIndex(c => c.id === cardId);
     if (cardIndex === -1) return;
 
@@ -1653,7 +1924,7 @@ function renderProjectSelector() {
             <div class="project-color" style="background:${p.color}"></div>
             <span class="project-name">${escHtml(p.name)}</span>
             <span class="project-count">${getProjectCardCount(p.id)}</span>
-            <button class="project-edit-btn" onclick="event.stopPropagation();openProjectEdit('${p.id}','${escHtml(p.name)}','${p.color}')" title="Редактировать">
+            <button class="project-edit-btn" data-project-id="${p.id}" data-project-name="${escHtml(p.name)}" data-project-color="${p.color}" title="Редактировать">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             </button>
         </div>
@@ -1680,6 +1951,9 @@ function renderProjectSelector() {
         filterEl.innerHTML = '<option value="">Все</option>' +
             projects.map(p => `<option value="${p.id}" ${p.id === current.id ? 'selected' : ''}>${escHtml(p.name)}</option>`).join('');
     }
+
+    // Обновить фильтр сотрудников
+    populateAssigneeFilter();
 }
 
 function getProjectCardCount(projectId) {
@@ -1768,8 +2042,14 @@ function deleteCurrentProject() {
 }
 
 function handleProjectClick(e) {
+    const editBtn = e.target.closest('.project-edit-btn');
+    if (editBtn) {
+        e.stopPropagation();
+        openProjectEdit(editBtn.dataset.projectId, editBtn.dataset.projectName, editBtn.dataset.projectColor);
+        return;
+    }
     const item = e.target.closest('.project-item');
-    if (!item || e.target.closest('.project-edit-btn')) return;
+    if (!item) return;
     const projectId = item.dataset.projectId;
     if (projectId && projectId !== getCurrentProject().id) {
         switchProject(projectId);
@@ -1799,6 +2079,7 @@ document.addEventListener('DOMContentLoaded', () => {
         boardData[colId].forEach(c => {
             if (!c.checklists) c.checklists = [];
             if (!c.projectId && currentProj) c.projectId = currentProj.id;
+            if (!c.assigneeId) c.assigneeId = '';
         });
     }
 
@@ -1809,6 +2090,37 @@ document.addEventListener('DOMContentLoaded', () => {
     // Форма карточки
     document.getElementById('cardForm').addEventListener('submit', submitCard);
     document.getElementById('btnCancel').addEventListener('click', closeModal);
+
+    // Сотрудники: select + добавление
+    document.getElementById('cardAssignee').addEventListener('change', (e) => {
+        if (e.target.value === '__new__') {
+            document.getElementById('assigneeAddRow').style.display = 'flex';
+            document.getElementById('cardAssigneeNew').focus();
+        } else {
+            document.getElementById('assigneeAddRow').style.display = 'none';
+        }
+    });
+    document.getElementById('btnAddAssignee').addEventListener('click', () => {
+        const input = document.getElementById('cardAssigneeNew');
+        const name = input.value.trim();
+        if (!name) return;
+        const assignees = loadAssignees();
+        if (assignees.some(a => a.name.toLowerCase() === name.toLowerCase())) {
+            showToast('⚠️ Такой сотрудник уже есть');
+            return;
+        }
+        const newAssignee = { id: genAssigneeId(), name, createdAt: Date.now() };
+        assignees.push(newAssignee);
+        saveAssignees(assignees);
+        populateAssigneeSelect(document.getElementById('cardAssignee'), newAssignee.id);
+        document.getElementById('assigneeAddRow').style.display = 'none';
+        input.value = '';
+        populateAssigneeFilter();
+        showToast(`✅ Сотрудник «${name}» добавлен`);
+    });
+    document.getElementById('cardAssigneeNew').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); document.getElementById('btnAddAssignee').click(); }
+    });
 
     // Оверлеи
     document.getElementById('modalOverlay').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeModal(); });
@@ -1875,12 +2187,14 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('filterPriority').addEventListener('change', (e) => { filters.priority = e.target.value; renderBoard(); });
     document.getElementById('filterLabel').addEventListener('change', (e) => { filters.label = e.target.value; renderBoard(); });
     document.getElementById('filterDue').addEventListener('change', (e) => { filters.due = e.target.value; renderBoard(); });
+    document.getElementById('filterAssignee').addEventListener('change', (e) => { filters.assignee = e.target.value; renderBoard(); });
     document.getElementById('filterClear').addEventListener('click', () => {
-        filters = { project: '', priority: '', label: '', due: '' };
+        filters = { project: '', priority: '', label: '', due: '', assignee: '' };
         document.getElementById('filterProject').value = '';
         document.getElementById('filterPriority').value = '';
         document.getElementById('filterLabel').value = '';
         document.getElementById('filterDue').value = '';
+        document.getElementById('filterAssignee').value = '';
         renderBoard();
     });
 
@@ -1923,6 +2237,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Клик по карточке — превью или мультивыбор
     let clickTimer = null;
+    let lastDblClickTime = 0;
+    let lastSelectedCardId = null;
     document.getElementById('board').addEventListener('click', (e) => {
         const card = e.target.closest('.card');
         if (!card) return;
@@ -1932,24 +2248,49 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.ctrlKey || e.metaKey) {
             e.preventDefault();
             toggleCardSelection(card.dataset.cardId);
+            lastSelectedCardId = card.dataset.cardId;
             return;
         }
 
         if (e.shiftKey) {
             e.preventDefault();
+            if (lastSelectedCardId) {
+                const allCards = getAllVisibleCards();
+                const ids = allCards.map(c => c.card.id);
+                const startIdx = ids.indexOf(lastSelectedCardId);
+                const endIdx = ids.indexOf(card.dataset.cardId);
+                if (startIdx !== -1 && endIdx !== -1) {
+                    const [from, to] = startIdx < endIdx ? [startIdx, endIdx] : [endIdx, startIdx];
+                    for (let i = from; i <= to; i++) selectedCards.add(ids[i]);
+                    renderBoard();
+                    updateMultiSelectBar();
+                    return;
+                }
+            }
             toggleCardSelection(card.dataset.cardId);
+            lastSelectedCardId = card.dataset.cardId;
             return;
         }
 
         clearTimeout(clickTimer);
         clickTimer = setTimeout(() => {
+            if (Date.now() - lastDblClickTime < 300) return;
             openPreview(card.dataset.columnId, card.dataset.cardId);
-        }, 200);
+        }, 250);
+    });
+
+    // Очистка column-drag-over при выходе за пределы доски
+    document.getElementById('board').addEventListener('dragleave', (e) => {
+        if (!e.relatedTarget || !document.getElementById('board').contains(e.relatedTarget)) {
+            document.querySelectorAll('.column.column-drag-over').forEach(el => el.classList.remove('column-drag-over'));
+            document.querySelectorAll('.column-drop-indicator').forEach(el => el.remove());
+        }
     });
 
     // Двойной клик — inline редактирование
     document.getElementById('board').addEventListener('dblclick', (e) => {
         clearTimeout(clickTimer);
+        lastDblClickTime = Date.now();
 
         const titleEl = e.target.closest('.card-title');
         if (titleEl) {
