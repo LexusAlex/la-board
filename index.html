@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Board</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <div class="logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+                </svg>
+            </div>
+            <div>
+                <h1 class="header-title">Task Board</h1>
+                <p class="header-subtitle">Перетаскивайте карточки между колонками</p>
+            </div>
+            <div class="project-selector-wrap">
+                <button id="projectSelectorBtn" class="project-selector" aria-label="Выбрать проект">
+                    <span id="currentProjectDot" class="project-dot" style="background:#4361ee"></span>
+                    <span id="currentProjectName" class="project-current-name">Мой проект</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6,9 12,15 18,9"/></svg>
+                </button>
+                <div id="projectDropdown" class="project-dropdown">
+                    <div id="projectList" class="project-list"></div>
+                    <div class="project-dropdown-footer">
+                        <button id="projectCreateBtn" class="project-create-btn">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            Новый проект
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="search-box">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" id="searchInput" placeholder="Поиск задач..." aria-label="Поиск задач">
+            </div>
+            <span id="totalCards" class="total-badge"></span>
+            <div id="headerProgress" class="header-progress">
+                <div class="header-progress-bar"><div class="header-progress-fill" id="headerProgressFill"></div></div>
+                <span class="header-progress-text" id="headerProgressText">0%</span>
+            </div>
+            <button id="btnTheme" class="btn-icon" title="Тема (T)" aria-label="Переключить тему">
+                <svg id="iconSun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                <svg id="iconMoon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            </button>
+            <button id="btnFilter" class="btn-icon" title="Фильтры (F)" aria-label="Фильтры">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22,3 2,3 10,12.46 10,19 14,21 14,12.46"/></svg>
+            </button>
+            <button id="btnCompact" class="btn-icon" title="Компакт (C)" aria-label="Компактный режим">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            </button>
+            <button id="btnExport" class="btn-icon" title="Экспорт" aria-label="Экспорт данных">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            </button>
+            <button id="btnImport" class="btn-icon" title="Импорт" aria-label="Импорт данных">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            </button>
+            <input type="file" id="importFile" accept=".json" style="display:none;" aria-label="Выберите файл">
+            <button id="btnSort" class="btn-icon" title="Сортировка" aria-label="Сортировать">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19,12 12,19 5,12"/></svg>
+            </button>
+            <button id="btnUndo" class="btn-icon" title="Отменить (Ctrl+Z)" aria-label="Отменить" disabled>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1,4 1,10 7,10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+            </button>
+            <button id="btnRedo" class="btn-icon" title="Повторить (Ctrl+Y)" aria-label="Повторить" disabled>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23,4 23,10 17,10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            </button>
+            <button id="btnReset" class="btn-ghost" aria-label="Сбросить доску">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23,4 23,10 17,10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                Сбросить
+            </button>
+        </div>
+    </header>
+
+    <div class="filter-bar" id="filterBar">
+        <label>Проект:</label>
+        <select id="filterProject"><option value="">Все</option></select>
+        <label>Приоритет:</label>
+        <select id="filterPriority"><option value="">Все</option><option value="high">Высокий</option><option value="medium">Средний</option><option value="low">Низкий</option></select>
+        <label>Метка:</label>
+        <select id="filterLabel"><option value="">Все</option><option value="bug">Баг</option><option value="feature">Фича</option><option value="improvement">Улучшение</option><option value="urgent">Срочно</option></select>
+        <label>Дедлайн:</label>
+        <select id="filterDue"><option value="">Все</option><option value="overdue">Просроченные</option><option value="today">Сегодня</option><option value="week">На этой неделе</option><option value="none">Без дедлайна</option></select>
+        <button class="filter-clear" id="filterClear">Сбросить</button>
+    </div>
+
+    <main id="board" class="board" role="region" aria-label="Канбан-доска"></main>
+
+    <!-- Модалка создания/редактирования -->
+    <div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="modal">
+            <h2 id="modalTitle" class="modal-title">Новая карточка</h2>
+            <form id="cardForm" class="modal-form">
+                <div class="form-group"><label for="cardTitle">Заголовок *</label><input type="text" id="cardTitle" placeholder="Введите заголовок задачи..." maxlength="100" required></div>
+                <div class="form-group"><label for="cardDesc">Описание</label><textarea id="cardDesc" placeholder="Необязательное описание..." rows="3"></textarea></div>
+                <div class="form-group"><label for="cardPriority">Приоритет</label><select id="cardPriority"><option value="low">Низкий</option><option value="medium" selected>Средний</option><option value="high">Высокий</option></select></div>
+                <div class="form-group"><label for="cardLabel">Метка</label><select id="cardLabel"><option value="">Без метки</option><option value="bug">Баг</option><option value="feature">Фича</option><option value="improvement">Улучшение</option><option value="urgent">Срочно</option></select></div>
+                <div class="form-group"><label for="cardProject">Проект</label><select id="cardProject"></select></div>
+                <div class="form-group"><label for="cardDueDate">Дедлайн</label><input type="date" id="cardDueDate"></div>
+                <div class="modal-actions"><button type="button" class="btn-ghost" id="btnCancel">Отмена</button><button type="submit" class="btn-primary" id="btnSubmit">Создать</button></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Превью карточки -->
+    <div class="modal-overlay" id="previewOverlay" role="dialog" aria-modal="true">
+        <div class="modal modal-preview">
+            <div class="preview-header"><div class="preview-id" id="previewId"></div><h2 class="preview-title" id="previewTitle"></h2></div>
+            <div class="preview-desc" id="previewDesc"></div>
+            <div class="preview-meta" id="previewMeta"></div>
+            <div class="modal-actions"><button class="btn-ghost" id="previewClose">Закрыть</button><button class="btn-primary" id="previewEdit">Редактировать</button></div>
+        </div>
+    </div>
+
+    <!-- Подтверждение удаления -->
+    <div class="modal-overlay" id="confirmOverlay" role="alertdialog" aria-modal="true">
+        <div class="modal modal-confirm"><h2 class="modal-title">Удалить карточку?</h2><p class="confirm-text">Это действие нельзя отменить.</p><div class="modal-actions"><button class="btn-ghost" id="confirmCancel">Отмена</button><button class="btn-danger" id="confirmDelete">Удалить</button></div></div>
+    </div>
+
+    <!-- WIP лимит -->
+    <div class="modal-overlay" id="wipOverlay" role="dialog" aria-modal="true">
+        <div class="modal"><h2 class="modal-title">Лимит карточек</h2><div class="form-group"><label for="wipLimit">Максимум карточек (0 = без лимита)</label><input type="number" id="wipLimit" min="0" max="99" value="0"></div><div class="modal-actions"><button class="btn-ghost" id="wipCancel">Отмена</button><button class="btn-primary" id="wipSave">Сохранить</button></div></div>
+    </div>
+
+    <!-- Перемещение мультивыбора -->
+    <div class="modal-overlay" id="moveOverlay" role="dialog" aria-modal="true">
+        <div class="modal"><h2 class="modal-title">Переместить выбранные</h2><div class="form-group"><label for="moveTargetColumn">Куда переместить</label><select id="moveTargetColumn"></select></div><div class="modal-actions"><button class="btn-ghost" id="moveCancel">Отмена</button><button class="btn-primary" id="moveConfirm">Переместить</button></div></div>
+    </div>
+
+    <!-- Чеклист -->
+    <div class="modal-overlay" id="checklistOverlay" role="dialog" aria-modal="true">
+        <div class="modal"><h2 class="modal-title">Чеклист</h2>
+            <div id="checklistItems" class="checklist-edit-list"></div>
+            <div class="checklist-add-row"><input type="text" id="checklistNewInput" placeholder="Новый пункт..." maxlength="200"><button type="button" class="btn-primary" id="checklistAdd">+</button></div>
+            <div class="modal-actions"><button class="btn-ghost" id="checklistCancel">Отмена</button><button class="btn-primary" id="checklistSave">Сохранить</button></div>
+        </div>
+    </div>
+
+    <!-- Сортировка -->
+    <div class="modal-overlay" id="sortOverlay">
+        <div class="modal" style="width:280px;"><h2 class="modal-title">Сортировка</h2>
+            <div class="sort-options">
+                <button class="sort-option" onclick="sortBy('priority')">📊 По приоритету</button>
+                <button class="sort-option" onclick="sortBy('date')">📅 По дате</button>
+                <button class="sort-option" onclick="sortBy('name')">🔤 По имени</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Управление проектом -->
+    <div class="modal-overlay" id="projectManageOverlay" role="dialog" aria-modal="true">
+        <div class="modal" style="width:380px;">
+            <h2 id="projectManageTitle" class="modal-title">Новый проект</h2>
+            <div class="form-group">
+                <label for="projectNameInput">Название проекта</label>
+                <input type="text" id="projectNameInput" placeholder="Введите название..." maxlength="50" required>
+            </div>
+            <div class="form-group">
+                <label for="projectColorInput">Цвет</label>
+                <div class="color-picker">
+                    <input type="color" id="projectColorInput" value="#4361ee">
+                    <div class="color-presets">
+                        <button type="button" class="color-preset" data-color="#4361ee" style="background:#4361ee"></button>
+                        <button type="button" class="color-preset" data-color="#ef476f" style="background:#ef476f"></button>
+                        <button type="button" class="color-preset" data-color="#06d6a0" style="background:#06d6a0"></button>
+                        <button type="button" class="color-preset" data-color="#ff9f1c" style="background:#ff9f1c"></button>
+                        <button type="button" class="color-preset" data-color="#7209b7" style="background:#7209b7"></button>
+                        <button type="button" class="color-preset" data-color="#118ab2" style="background:#118ab2"></button>
+                        <button type="button" class="color-preset" data-color="#e63946" style="background:#e63946"></button>
+                        <button type="button" class="color-preset" data-color="#2a9d8f" style="background:#2a9d8f"></button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-danger" id="projectDeleteBtn" style="display:none;margin-right:auto;">Удалить</button>
+                <button type="button" class="btn-ghost" id="projectCancelBtn">Отмена</button>
+                <button type="button" class="btn-primary" id="projectSaveBtn">Создать</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Панель мультивыбора -->
+    <div class="multi-select-bar" id="multiSelectBar">
+        <span id="selectCount">0 выбрано</span>
+        <button id="selectMove">Переместить</button>
+        <button id="selectDelete">Удалить</button>
+        <button id="selectClear">Снять</button>
+    </div>
+
+    <!-- Тосты -->
+    <div class="toast-container" id="toastContainer" role="status" aria-live="polite"></div>
+
+    <!-- Подсказки -->
+    <div class="shortcuts-hint" id="shortcutsHint">
+        <span>N</span> новая &nbsp;|&nbsp;
+        <span>Esc</span> закрыть &nbsp;|&nbsp;
+        <span>T</span> тема &nbsp;|&nbsp;
+        <span>F</span> фильтры &nbsp;|&nbsp;
+        <span>C</span> компакт &nbsp;|&nbsp;
+        <span>↑↓←→</span> навигация &nbsp;|&nbsp;
+        <span>Ctrl+C</span> копировать &nbsp;|&nbsp;
+        <span>?</span> подсказки
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

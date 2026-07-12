@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Канбан-доска</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        :root {
+            --bg: #0F1117;
+            --bg-raised: #161822;
+            --card: #1C1F2E;
+            --card-hover: #242738;
+            --border: #2A2D3E;
+            --fg: #E8E9ED;
+            --muted: #6B7089;
+            --accent: #E8913A;
+            --accent-glow: rgba(232, 145, 58, 0.15);
+            --danger: #E85A5A;
+            --success: #3EC78A;
+            --info: #5AA8E8;
+            --purple: #A47AE8;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg);
+            color: var(--fg);
+            min-height: 100vh;
+            overflow-x: auto;
+        }
+
+        /* Фоновая атмосфера */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -30%;
+            left: -10%;
+            width: 60%;
+            height: 60%;
+            background: radial-gradient(ellipse, rgba(232, 145, 58, 0.06) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        body::after {
+            content: '';
+            position: fixed;
+            bottom: -20%;
+            right: -10%;
+            width: 50%;
+            height: 50%;
+            background: radial-gradient(ellipse, rgba(62, 199, 138, 0.04) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Скроллбар */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+        /* Колонка */
+        .column {
+            background: var(--bg-raised);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            min-width: 300px;
+            max-width: 320px;
+            display: flex;
+            flex-direction: column;
+            max-height: calc(100vh - 120px);
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        .column.drag-over {
+            border-color: var(--accent);
+            box-shadow: 0 0 30px var(--accent-glow), inset 0 0 20px var(--accent-glow);
+        }
+
+        .column-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 12px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-height: 60px;
+        }
+
+        /* Карточка */
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 16px;
+            cursor: grab;
+            transition: transform 0.2s, box-shadow 0.2s, background 0.2s, opacity 0.2s;
+            position: relative;
+            user-select: none;
+        }
+        .card:hover {
+            background: var(--card-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+        .card:active { cursor: grabbing; }
+        .card.dragging {
+            opacity: 0.4;
+            transform: scale(0.95) rotate(2deg);
+        }
+
+        /* Индикатор вставки */
+        .drop-indicator {
+            height: 3px;
+            background: var(--accent);
+            border-radius: 2px;
+            margin: 2px 0;
+            box-shadow: 0 0 12px var(--accent-glow);
+            animation: indicatorPulse 1s ease-in-out infinite;
+            flex-shrink: 0;
+        }
+        @keyframes indicatorPulse {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+
+        /* Метка приоритета */
+        .priority-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .priority-high { background: rgba(232, 90, 90, 0.15); color: var(--danger); }
+        .priority-medium { background: rgba(232, 145, 58, 0.15); color: var(--accent); }
+        .priority-low { background: rgba(62, 199, 138, 0.15); color: var(--success); }
+
+        /* Кнопки */
+        .btn-add {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            width: 100%;
+            padding: 10px;
+            border: 1px dashed var(--border);
+            border-radius: 10px;
+            background: transparent;
+            color: var(--muted);
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-add:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--accent-glow);
+        }
+
+        .btn-delete {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 24px;
+            height: 24px;
+            border: none;
+            border-radius: 6px;
+            background: transparent;
+            color: var(--muted);
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: all 0.2s;
+        }
+        .card:hover .btn-delete { opacity: 1; }
+        .btn-delete:hover { background: rgba(232, 90, 90, 0.15); color: var(--danger); }
+
+        /* Модальное окно */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: all; }
+
+        .modal {
+            background: var(--bg-raised);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 32px;
+            width: 420px;
+            max-width: 90vw;
+            transform: translateY(20px) scale(0.95);
+            transition: transform 0.3s;
+        }
+        .modal-overlay.active .modal { transform: translateY(0) scale(1); }
+
+        .modal input, .modal textarea, .modal select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--card);
+            color: var(--fg);
+            font-family: inherit;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .modal input:focus, .modal textarea:focus, .modal select:focus {
+            border-color: var(--accent);
+        }
+        .modal textarea { resize: vertical; min-height: 70px; }
+        .modal select { cursor: pointer; }
+        .modal select option { background: var(--card); color: var(--fg); }
+
+        .btn-primary {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 10px;
+            background: var(--accent);
+            color: #fff;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+        .btn-ghost {
+            padding: 10px 24px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: transparent;
+            color: var(--muted);
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-ghost:hover { border-color: var(--fg); color: var(--fg); }
+
+        /* Тост */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .toast {
+            padding: 12px 20px;
+            border-radius: 10px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--fg);
+            font-size: 13px;
+            font-weight: 500;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            animation: toastIn 0.3s ease, toastOut 0.3s ease 2.2s forwards;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        @keyframes toastIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes toastOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(40px); } }
+
+        /* Счётчик */
+        .count-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 22px;
+            height: 22px;
+            padding: 0 6px;
+            border-radius: 7px;
+            background: var(--card);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--muted);
+        }
+
+        /* Плавное появление карточки */
+        @keyframes cardAppear {
+            from { opacity: 0; transform: translateY(-10px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .card-appear { animation: cardAppear 0.3s ease; }
+
+        /* Заголовок колонки — точка */
+        .col-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        /* Идентификатор карточки */
+        .card-id {
+            font-size: 11px;
+            color: var(--muted);
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        /* Описание карточки */
+        .card-desc {
+            font-size: 13px;
+            color: var(--muted);
+            line-height: 1.4;
+            margin-top: 6px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+<!-- Шапка -->
+<header style="position: relative; z-index: 1; padding: 24px 32px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border);">
+    <div style="display: flex; align-items: center; gap: 14px;">
+        <div style="width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, var(--accent), #c76a1a); display: flex; align-items: center; justify-content: center;">
+            <i class="fas fa-layer-group" style="color: #fff; font-size: 16px;"></i>
+        </div>
+        <div>
+            <h1 style="font-size: 20px; font-weight: 700; letter-spacing: -0.5px;">Канбан-доска</h1>
+            <p style="font-size: 12px; color: var(--muted); margin-top: 1px;">Перетаскивайте карточки между колонками</p>
+        </div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px;">
+        <span id="totalCards" style="font-size: 13px; color: var(--muted);"></span>
+        <button onclick="resetBoard()" class="btn-ghost" style="padding: 8px 16px; font-size: 12px;">
+            <i class="fas fa-rotate-right" style="margin-right: 4px;"></i> Сбросить
+        </button>
+    </div>
+</header>
+
+<!-- Доска -->
+<main id="board" style="position: relative; z-index: 1; display: flex; gap: 16px; padding: 24px 32px; align-items: flex-start; min-height: calc(100vh - 80px);">
+    <!-- Колонки генерируются через JS -->
+</main>
+
+<!-- Модальное окно -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+        <h2 style="font-size: 18px; font-weight: 700; margin-bottom: 20px;">Новая карточка</h2>
+        <div style="display: flex; flex-direction: column; gap: 14px;">
+            <div>
+                <label style="font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Заголовок</label>
+                <input type="text" id="cardTitle" placeholder="Введите заголовок задачи..." maxlength="80">
+            </div>
+            <div>
+                <label style="font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Описание</label>
+                <textarea id="cardDesc" placeholder="Необязательное описание..."></textarea>
+            </div>
+            <div>
+                <label style="font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Приоритет</label>
+                <select id="cardPriority">
+                    <option value="low">Низкий</option>
+                    <option value="medium" selected>Средний</option>
+                    <option value="high">Высокий</option>
+                </select>
+            </div>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px;">
+            <button class="btn-ghost" onclick="closeModal()">Отмена</button>
+            <button class="btn-primary" onclick="submitCard()">Создать</button>
+        </div>
+    </div>
+</div>
+
+<!-- Тосты -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+    // === Данные ===
+    const COLUMNS = [
+        { id: 'backlog', title: 'Бэклог', color: '#6B7089', icon: 'fa-inbox' },
+        { id: 'todo',    title: 'К выполнению', color: '#5AA8E8', icon: 'fa-list-check' },
+        { id: 'doing',   title: 'В работе', color: '#E8913A', icon: 'fa-spinner' },
+        { id: 'review',  title: 'На ревью', color: '#A47AE8', icon: 'fa-eye' },
+        { id: 'done',    title: 'Готово', color: '#3EC78A', icon: 'fa-circle-check' },
+    ];
+
+    // Начальные карточки
+    const DEFAULT_CARDS = {
+        backlog: [
+            { id: genId(), title: 'Исследовать конкурентов', desc: 'Анализ 5 основных конкурентов на рынке', priority: 'low' },
+            { id: genId(), title: 'Написать техническое задание', desc: 'Для модуля аналитики и дашборда', priority: 'high' },
+            { id: genId(), title: 'Дизайн иконок для мобильной версии', desc: '', priority: 'medium' },
+        ],
+        todo: [
+            { id: genId(), title: 'Настроить CI/CD пайплайн', desc: 'GitHub Actions для автоматического деплоя', priority: 'high' },
+            { id: genId(), title: 'Рефакторинг модуля авторизации', desc: 'Вынести общую логику в отдельный сервис', priority: 'medium' },
+        ],
+        doing: [
+            { id: genId(), title: 'Интеграция платёжной системы', desc: 'Stripe API, обработка вебхуков', priority: 'high' },
+            { id: genId(), title: 'Оптимизация SQL-запросов', desc: 'Ускорить загрузку дашборда в 3 раза', priority: 'medium' },
+        ],
+        review: [
+            { id: genId(), title: 'Страница настроек профиля', desc: 'Аватар, имя, уведомления, тема', priority: 'low' },
+        ],
+        done: [
+            { id: genId(), title: 'Регистрация и вход пользователя', desc: 'Email + OAuth через Google', priority: 'high' },
+            { id: genId(), title: 'Базовый лейаут приложения', desc: 'Сайдбар, хедер, адаптив', priority: 'medium' },
+        ],
+    };
+
+    // Текущее состояние
+    let boardData = JSON.parse(JSON.stringify(DEFAULT_CARDS));
+    let currentColumnId = null; // Колонка, в которую добавляем
+    let draggedCardId = null;
+    let dragSourceColumnId = null;
+
+    // === Утилиты ===
+    function genId() {
+        return 'card_' + Math.random().toString(36).slice(2, 9);
+    }
+
+    function getPriorityLabel(p) {
+        return { high: 'Высокий', medium: 'Средний', low: 'Низкий' }[p] || 'Средний';
+    }
+
+    function getPriorityClass(p) {
+        return { high: 'priority-high', medium: 'priority-medium', low: 'priority-low' }[p] || 'priority-medium';
+    }
+
+    function getCardNumber(columnId, cardIndex) {
+        // Простой визуальный номер: первые 2 буквы колонки + индекс
+        const prefix = columnId.slice(0, 2).toUpperCase();
+        return `${prefix}-${String(cardIndex + 1).padStart(2, '0')}`;
+    }
+
+    function updateTotalCount() {
+        let total = 0;
+        for (const col of COLUMNS) {
+            total += (boardData[col.id] || []).length;
+        }
+        document.getElementById('totalCards').textContent = `${total} задач`;
+    }
+
+    // === Рендер ===
+    function renderBoard() {
+        const board = document.getElementById('board');
+        board.innerHTML = '';
+
+        COLUMNS.forEach(col => {
+            const cards = boardData[col.id] || [];
+            const colEl = document.createElement('div');
+            colEl.className = 'column';
+            colEl.dataset.columnId = col.id;
+
+            // Шапка колонки
+            colEl.innerHTML = `
+          <div style="padding: 16px 16px 12px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border);">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <div class="col-dot" style="background: ${col.color}; box-shadow: 0 0 8px ${col.color}44;"></div>
+              <span style="font-size: 14px; font-weight: 600;">${col.title}</span>
+              <span class="count-badge">${cards.length}</span>
+            </div>
+            <i class="fas ${col.icon}" style="color: ${col.color}; font-size: 14px; opacity: 0.6;"></i>
+          </div>
+          <div class="column-body" data-column-id="${col.id}">
+            ${cards.map((card, i) => renderCard(card, col.id, i)).join('')}
+          </div>
+          <div style="padding: 0 12px 12px;">
+            <button class="btn-add" onclick="openModal('${col.id}')">
+              <i class="fas fa-plus" style="font-size: 11px;"></i>
+              Добавить карточку
+            </button>
+          </div>
+        `;
+
+            board.appendChild(colEl);
+        });
+
+        // Навешиваем события drag & drop на тела колонок
+        document.querySelectorAll('.column-body').forEach(body => {
+            body.addEventListener('dragover', handleDragOver);
+            body.addEventListener('dragenter', handleDragEnter);
+            body.addEventListener('dragleave', handleDragLeave);
+            body.addEventListener('drop', handleDrop);
+        });
+
+        // Навешиваем события на карточки
+        document.querySelectorAll('.card').forEach(card => {
+            card.addEventListener('dragstart', handleDragStart);
+            card.addEventListener('dragend', handleDragEnd);
+        });
+
+        updateTotalCount();
+    }
+
+    function renderCard(card, columnId, index) {
+        const idAttr = card.id;
+        return `
+        <div class="card" draggable="true" data-card-id="${idAttr}" data-column-id="${columnId}">
+          <button class="btn-delete" onclick="deleteCard('${columnId}', '${idAttr}')" aria-label="Удалить карточку">
+            <i class="fas fa-xmark"></i>
+          </button>
+          <div class="card-id">${getCardNumber(columnId, index)}</div>
+          <div style="font-size: 14px; font-weight: 600; line-height: 1.4; padding-right: 20px;">${escHtml(card.title)}</div>
+          ${card.desc ? `<div class="card-desc">${escHtml(card.desc)}</div>` : ''}
+          <div style="margin-top: 10px;">
+            <span class="priority-tag ${getPriorityClass(card.priority)}">
+              <i class="fas fa-flag" style="font-size: 9px;"></i>
+              ${getPriorityLabel(card.priority)}
+            </span>
+          </div>
+        </div>
+      `;
+    }
+
+    function escHtml(str) {
+        const d = document.createElement('div');
+        d.textContent = str;
+        return d.innerHTML;
+    }
+
+    // === Drag & Drop ===
+    function handleDragStart(e) {
+        const card = e.target.closest('.card');
+        if (!card) return;
+        draggedCardId = card.dataset.cardId;
+        dragSourceColumnId = card.dataset.columnId;
+
+        // Задержка для корректного отображения "призрака"
+        requestAnimationFrame(() => {
+            card.classList.add('dragging');
+        });
+
+        e.dataTransfer.effectAllowed = 'move';
+        // Firefox требует setData
+        e.dataTransfer.setData('text/plain', draggedCardId);
+    }
+
+    function handleDragEnd(e) {
+        const card = e.target.closest('.card');
+        if (card) card.classList.remove('dragging');
+
+        // Убираем все индикаторы и подсветки
+        document.querySelectorAll('.drop-indicator').forEach(el => el.remove());
+        document.querySelectorAll('.column.drag-over').forEach(el => el.classList.remove('drag-over'));
+
+        draggedCardId = null;
+        dragSourceColumnId = null;
+    }
+
+    function handleDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+
+        const body = e.currentTarget;
+        const afterElement = getDragAfterElement(body, e.clientY);
+
+        // Удаляем старые индикаторы в этой колонке
+        body.querySelectorAll('.drop-indicator').forEach(el => el.remove());
+
+        // Создаём индикатор
+        const indicator = document.createElement('div');
+        indicator.className = 'drop-indicator';
+
+        if (afterElement) {
+            body.insertBefore(indicator, afterElement);
+        } else {
+            body.appendChild(indicator);
+        }
+    }
+
+    function handleDragEnter(e) {
+        e.preventDefault();
+        const column = e.currentTarget.closest('.column');
+        if (column) column.classList.add('drag-over');
+    }
+
+    function handleDragLeave(e) {
+        const body = e.currentTarget;
+        const related = e.relatedTarget;
+        // Проверяем, действительно ли мы вышли за пределы колонки
+        if (!body.contains(related)) {
+            body.querySelectorAll('.drop-indicator').forEach(el => el.remove());
+            const column = body.closest('.column');
+            if (column) column.classList.remove('drag-over');
+        }
+    }
+
+    function handleDrop(e) {
+        e.preventDefault();
+        const body = e.currentTarget;
+        const targetColumnId = body.dataset.columnId;
+
+        if (!draggedCardId || !dragSourceColumnId) return;
+
+        // Убираем визуальные эффекты
+        body.querySelectorAll('.drop-indicator').forEach(el => el.remove());
+        document.querySelectorAll('.column.drag-over').forEach(el => el.classList.remove('drag-over'));
+
+        // Находим карточку в данных
+        const srcCards = boardData[dragSourceColumnId];
+        const cardIndex = srcCards.findIndex(c => c.id === draggedCardId);
+        if (cardIndex === -1) return;
+
+        const [card] = srcCards.splice(cardIndex, 1);
+
+        // Определяем позицию вставки
+        const afterElement = getDragAfterElement(body, e.clientY);
+        let insertIndex = (boardData[targetColumnId] || []).length;
+
+        if (afterElement) {
+            const afterCardId = afterElement.dataset.cardId;
+            const afterColId = afterElement.dataset.columnId;
+            if (afterColId === targetColumnId) {
+                insertIndex = boardData[targetColumnId].findIndex(c => c.id === afterCardId);
+            }
+        }
+
+        if (!boardData[targetColumnId]) boardData[targetColumnId] = [];
+        boardData[targetColumnId].splice(insertIndex, 0, card);
+
+        // Перерисовываем
+        renderBoard();
+
+        // Анимация для перетаскиваемой карточки
+        const movedCard = document.querySelector(`[data-card-id="${draggedCardId}"]`);
+        if (movedCard) movedCard.classList.add('card-appear');
+
+        // Уведомление при перемещении между колонками
+        if (dragSourceColumnId !== targetColumnId) {
+            const srcCol = COLUMNS.find(c => c.id === dragSourceColumnId);
+            const tgtCol = COLUMNS.find(c => c.id === targetColumnId);
+            showToast(`<i class="fas fa-arrow-right" style="color: var(--accent);"></i> «${card.title.slice(0, 30)}${card.title.length > 30 ? '...' : ''}» → ${tgtCol.title}`);
+        }
+    }
+
+    // Определяем элемент, перед которым нужно вставить
+    function getDragAfterElement(container, y) {
+        const draggableElements = [...container.querySelectorAll('.card:not(.dragging)')];
+        return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+            if (offset < 0 && offset > closest.offset) {
+                return { offset, element: child };
+            }
+            return closest;
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+
+    // === Модальное окно ===
+    function openModal(columnId) {
+        currentColumnId = columnId;
+        document.getElementById('modalOverlay').classList.add('active');
+        document.getElementById('cardTitle').value = '';
+        document.getElementById('cardDesc').value = '';
+        document.getElementById('cardPriority').value = 'medium';
+        setTimeout(() => document.getElementById('cardTitle').focus(), 100);
+    }
+
+    function closeModal() {
+        document.getElementById('modalOverlay').classList.remove('active');
+        currentColumnId = null;
+    }
+
+    function submitCard() {
+        const title = document.getElementById('cardTitle').value.trim();
+        const desc = document.getElementById('cardDesc').value.trim();
+        const priority = document.getElementById('cardPriority').value;
+
+        if (!title) {
+            document.getElementById('cardTitle').style.borderColor = 'var(--danger)';
+            document.getElementById('cardTitle').focus();
+            setTimeout(() => document.getElementById('cardTitle').style.borderColor = '', 1500);
+            return;
+        }
+
+        if (!boardData[currentColumnId]) boardData[currentColumnId] = [];
+        const newCard = { id: genId(), title, desc, priority };
+        boardData[currentColumnId].push(newCard);
+
+        closeModal();
+        renderBoard();
+
+        // Анимация для новой карточки
+        const el = document.querySelector(`[data-card-id="${newCard.id}"]`);
+        if (el) el.classList.add('card-appear');
+
+        const col = COLUMNS.find(c => c.id === currentColumnId);
+        showToast(`<i class="fas fa-plus" style="color: var(--success);"></i> Карточка добавлена в «${col.title}»`);
+    }
+
+    // Закрытие модалки по клику на оверлей
+    document.getElementById('modalOverlay').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closeModal();
+    });
+
+    // Закрытие модалки по Escape
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeModal();
+        // Enter в модалке — создать
+        if (e.key === 'Enter' && document.getElementById('modalOverlay').classList.contains('active')) {
+            const active = document.activeElement;
+            if (active.tagName !== 'TEXTAREA') submitCard();
+        }
+    });
+
+    // === Удаление ===
+    function deleteCard(columnId, cardId) {
+        const cards = boardData[columnId];
+        const index = cards.findIndex(c => c.id === cardId);
+        if (index === -1) return;
+
+        const card = cards[index];
+
+        // Анимация удаления
+        const el = document.querySelector(`[data-card-id="${cardId}"]`);
+        if (el) {
+            el.style.transition = 'all 0.25s ease';
+            el.style.opacity = '0';
+            el.style.transform = 'scale(0.9) translateX(20px)';
+            setTimeout(() => {
+                cards.splice(index, 1);
+                renderBoard();
+            }, 250);
+        } else {
+            cards.splice(index, 1);
+            renderBoard();
+        }
+
+        showToast(`<i class="fas fa-trash" style="color: var(--danger);"></i> «${card.title.slice(0, 30)}${card.title.length > 30 ? '...' : ''}» удалена`);
+    }
+
+    // === Сброс ===
+    function resetBoard() {
+        boardData = JSON.parse(JSON.stringify(DEFAULT_CARDS));
+        // Генерируем новые ID
+        for (const colId in boardData) {
+            boardData[colId].forEach(c => c.id = genId());
+        }
+        renderBoard();
+        showToast(`<i class="fas fa-rotate-right" style="color: var(--accent);"></i> Доска сброшена к исходному состоянию`);
+    }
+
+    // === Тосты ===
+    function showToast(html) {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.innerHTML = html;
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 2600);
+    }
+
+    // === Запуск ===
+    renderBoard();
+</script>
+</body>
+</html>
