@@ -244,7 +244,7 @@ body.compact .card { padding: 10px 12px; }
 .column.column-drag-over { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); transition: none; }
 
 .column.collapsed { min-width: 48px; max-width: 48px; cursor: pointer; }
-.column.collapsed .column-body, .column.collapsed .column-footer, .column.collapsed .progress-bar-wrap, .column.collapsed .wip-indicator { display: none; }
+.column.collapsed .column-body, .column.collapsed .column-footer, .column.collapsed .wip-indicator { display: none; }
 .column.collapsed .column-header {
     writing-mode: vertical-rl; padding: 16px 8px; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;
 }
@@ -288,11 +288,6 @@ body.compact .card { padding: 10px 12px; }
 .wip-indicator.warning { background: var(--warning-light); color: #b8860b; }
 .wip-indicator.exceeded { background: var(--danger-light); color: var(--danger); }
 
-.progress-bar-wrap { padding: 0 16px 8px; }
-.progress-bar-bg { height: 4px; background: var(--bg); border-radius: 2px; overflow: hidden; }
-.progress-bar-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.3s ease; }
-.progress-bar-text { font-size: 10px; color: var(--muted); text-align: right; margin-top: 2px; }
-
 .empty-state {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     padding: 32px 16px; color: var(--muted); font-size: 13px; text-align: center; opacity: 0.6;
@@ -309,7 +304,6 @@ body.compact .card { padding: 10px 12px; }
 .card.selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-light); }
 .card.focused { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
 
-.card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
 .card-id { font-size: 11px; color: var(--muted); font-weight: 500; margin-bottom: 4px; }
 .card-title {
     font-size: 14px; font-weight: 600; line-height: 1.4; flex: 1; word-break: break-word;
@@ -482,6 +476,7 @@ body.compact .card { padding: 10px 12px; }
     cursor: pointer; font-size: 14px; transition: all 0.2s; margin-left: auto;
 }
 .toast-close-btn:hover { background: var(--bg); color: var(--fg); }
+.toast.undo-toast { border-left: 3px solid var(--accent); }
 
 @keyframes toastIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
 @keyframes toastOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(40px); } }
